@@ -237,6 +237,25 @@ class PosProductSearchTest extends TestCase
             ->assertNotDispatched('add-to-cart');
     }
 
+    public function test_enter_on_inactive_barcode_does_not_auto_add(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+        $category = Category::factory()->create();
+        Product::factory()->inactive()->create([
+            'category_id' => $category->id,
+            'name' => 'Retired Barcode',
+            'sku' => 'SKU-RETIRED',
+            'barcode' => '8990001112223',
+            'active' => false,
+        ]);
+
+        Livewire::actingAs($cashier)
+            ->test(ProductSearch::class)
+            ->call('confirmScan', '8990001112223')
+            ->assertSet('search', '8990001112223')
+            ->assertNotDispatched('add-to-cart');
+    }
+
     public function test_empty_search_does_not_dump_the_catalog(): void
     {
         $cashier = User::factory()->cashier()->create();

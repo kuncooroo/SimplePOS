@@ -1,11 +1,31 @@
 <div>
-    <div class="mb-3">
+    <div
+        class="mb-3"
+        x-data="{
+            timer: null,
+            scheduleSearch(value) {
+                clearTimeout(this.timer)
+                this.timer = setTimeout(() => {
+                    $wire.set('search', value)
+                }, 400)
+            },
+            submitScan(value) {
+                clearTimeout(this.timer)
+                this.timer = null
+                $wire.confirmScan(value).then(() => {
+                    this.$refs.input?.focus()
+                })
+            },
+        }"
+    >
         <label for="pos-search" class="text-sm font-medium text-ink">Search products</label>
         <input
             id="pos-search"
+            x-ref="input"
             type="search"
-            wire:model.live.debounce.400ms="search"
-            wire:keydown.enter.prevent="confirmScan($event.target.value)"
+            value="{{ $search }}"
+            x-on:input="scheduleSearch($event.target.value)"
+            x-on:keydown.enter.prevent="submitScan($event.target.value)"
             autofocus
             autocomplete="off"
             placeholder="Name, SKU, or barcode — Enter to add on exact barcode"

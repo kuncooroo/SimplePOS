@@ -40,9 +40,7 @@ class ProductSearch extends Component
             ->whereKey($productId)
             ->firstOrFail();
 
-        $this->selectedProductId = $product->id;
-        $this->dispatch('product-selected', productId: $product->id);
-        $this->dispatch('add-to-cart', productId: $product->id);
+        $this->dispatchProductSelected($product);
     }
 
     /**
@@ -52,11 +50,14 @@ class ProductSearch extends Component
     {
         $this->authorizePosAccess();
 
-        $term = trim($scanned ?? $this->search);
+        $term = trim((string) ($scanned ?? $this->search));
         $this->search = $term;
         $this->selectedProductId = null;
+        $this->resetErrorBag('search');
 
         if ($term === '') {
+            $this->refocusSearch();
+
             return;
         }
 
@@ -68,12 +69,15 @@ class ProductSearch extends Component
             ->first();
 
         if ($product === null) {
+            $this->refocusSearch();
+
             return;
         }
 
-        $this->selectProduct($product->id);
+        $this->dispatchProductSelected($product);
         $this->search = '';
         $this->selectedProductId = null;
+        $this->refocusSearch();
     }
 
     /**
@@ -148,6 +152,18 @@ class ProductSearch extends Component
             'products' => $this->results(),
             'hasQuery' => $term !== '',
         ]);
+    }
+
+    private function dispatchProductSelected(Product $product): void
+    {
+        $this->selectedProductId = $product->id;
+        $this->dispatch('product-selected', productId: $product->id);
+        $this->dispatch('add-to-cart', productId: $product->id);
+    }
+
+    private function refocusSearch(): void
+    {
+        $this->js('document.getElementById("pos-search")?.focus()');
     }
 
     private function authorizePosAccess(): void
